@@ -6,9 +6,10 @@ from mpl_toolkits.mplot3d import Axes3D
 EARTH_RADIUS = 6371.0
 
 class Plotter:
-    def __init__(self, satellites):
-        self.satellites = satellites
-
+    def __init__(self, start, satellites, end):
+        self.points = satellites
+        self.start = start
+        self.end = end
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.set_xlabel('X Label')
@@ -31,10 +32,13 @@ class Plotter:
         x = r*sin(phi)*cos(theta)
         y = r*sin(phi)*sin(theta)
         z = r*cos(phi)
-
-        self.ax.plot_surface(x, y, z,  rstride=1, cstride=1, color='c', alpha=0.3, linewidth=0)
+        self.ax.plot_surface(x, y, z,  rstride=1, cstride=1, color='c', alpha=0.5, linewidth=0)
 
     def plot_satellites(self):
-        for satellite in self.satellites:
-            x, y, z = satellite.coordinates
+        (xs, ys, zs) = self.start.coordinates
+        (xe, ye, ze) = self.end.coordinates
+        self.ax.scatter(xs, ys, zs, c='b', marker='o')
+        self.ax.scatter(xe, ye, ze, c='b', marker='o')
+        for point in self.points:
+            x, y, z = point.coordinates
             self.ax.scatter(x, y, z, c='r', marker='o')
