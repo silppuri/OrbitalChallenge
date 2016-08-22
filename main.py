@@ -1,8 +1,7 @@
-import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-from satellite import Satellite
 from geopy.distance import great_circle
+
+from satellite import Satellite
+from plotter import Plotter
 
 EARTH_RADIUS = 6371.0
 
@@ -33,28 +32,4 @@ for satellite in satellites:
     other_satellites.remove(satellite)
     satellite.build_neighbours(other_satellites)
 
-# Create a sphere
-r = EARTH_RADIUS
-pi = np.pi
-cos = np.cos
-sin = np.sin
-phi, theta = np.mgrid[0.0:pi:100j, 0.0:2.0*pi:100j]
-x = r*sin(phi)*cos(theta)
-y = r*sin(phi)*sin(theta)
-z = r*cos(phi)
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(
-    x, y, z,  rstride=1, cstride=1, color='c', alpha=0.3, linewidth=0)
-
-n = 100
-for satellite in satellites:
-    x, y, z = satellite.coordinates
-    ax.scatter(x, y, z, c='r', marker='o')
-
-ax.set_xlabel('X Label')
-ax.set_ylabel('Y Label')
-ax.set_zlabel('Z Label')
-
-plt.show()
+#Plotter(satellites).plot()
