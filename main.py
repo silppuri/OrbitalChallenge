@@ -1,70 +1,34 @@
-from geopy.distance import great_circle
-
 from point import Point
-from plotter import Plotter
 from priority_queue import PriorityQueue
-
-EARTH_RADIUS = 6371.0
 
 data = open('positions.dat')
 rows = data.read().split('\n')
 route_data = rows[-2].split(',')
 seed = float(rows[0].split(' ')[-1])
 
-start = Point({
-    "name": "START",
-    "position": (float(route_data[1]), float(route_data[2]), EARTH_RADIUS)
-})
-end = Point({
-    "name": "END",
-    "position": (float(route_data[3]), float(route_data[4]), EARTH_RADIUS)
-})
-
-start_satellite = None
-goal_satellite = None
-start_distance = float('inf')
-end_distance = float('inf')
+start_point = Point(("START", float(route_data[1]), float(route_data[2]), 0))
+end_point = Point(("END", float(route_data[3]), float(route_data[4]), 0))
 satellites = []
 for line in rows[1:-2]:
     satellite_data = line.strip().split(',')
-    satellite = {
-        "name": satellite_data[0],
-        "position": (float(satellite_data[1]), float(satellite_data[2]), EARTH_RADIUS + float(satellite_data[3]))
-    }
-    satellites.append(Point(satellite))
+    satellites.append(Point(satellite_data))
 
-for satellite in satellites:
-    other_satellites = satellites[:]
-    other_satellites.remove(satellite)
-    satellite.build_neighbours(other_satellites)
+def closest(point):
+    closest_d = float('inf')
+    for satellite in satellites:
+        distance = point.distance_to(satellite)
+        if distance < closest_d:
+            closest = satellite
+            closest_d = distance
+    return closest
 
-    # Find the start and end satellites
-    if len(satellite.neighbours) == 0: continue
-    new_start_distance = start.distance_to(satellite)
-    new_end_distance = end.distance_to(satellite)
-    if new_start_distance < start_distance:
-        start_satellite = satellite
-        start_distance = new_start_distance
-    if new_end_distance < end_distance:
-        end_satellite = satellite
-        end_distance = new_end_distance
+def uniform_cost_search():
+    queue = PriorityQueue()
+    start = closest(start_point)
+    end = closest(end_point)
+    return ucs_traverse(start, queue, end)
 
-# Find route
-
-def heuristic(point):
-    return point.distance_to(end_satellite)
-
-def astar():
-    """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    def apply_heuristic(item):
-        (cost, _, point) = item
-        return heuristic(point) + cost
-
-    queue = PriorityQueue(apply_heuristic)
-    return astar_traverse(start_satellite, queue, end_satellite)
-
-def astar_traverse(start, nodes, goal):
+def ucs_traverse(start, nodes, goal):
     visited = set()
     start = (0, [start.name], start)
     nodes.push(start)
@@ -74,21 +38,13 @@ def astar_traverse(start, nodes, goal):
         if node in visited: continue
         visited.add(node)
 
-        if node == end_satellite:
+        if node == goal:
             return actions
 
-        for next in node.neighbours:
-            (successor_cost, name, point) = next
+        for next in node.neighbours(satellites):
+            (neighbour_cost, name, point) = next
             if not next in visited:
-                next_cost = cost + successor_cost
+                next_cost = cost + neighbour_cost
                 nodes.push((next_cost, actions + [name], point))
 
-print "seed ", seed
-print "satellites count ", len(satellites)
-print "Start satellite: ", start_satellite.name
-print "End satellite: ", end_satellite.name
-steps = astar()
-print "Route ", steps
-
-Plotter(start, satellites, end).plot()
-
+print uniform_cost_search()
